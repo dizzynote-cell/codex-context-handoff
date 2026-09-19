@@ -1,4 +1,4 @@
-# Context Handoff for Codex
+# Auto Context Handoff for Codex/Codex自动上下文交接插件
 
 [中文](#中文) · [English](#english)
 
