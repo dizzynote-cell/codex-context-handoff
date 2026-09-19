@@ -1,0 +1,21 @@
+{
+  "name": "context-handoff",
+  "version": "0.1.0",
+  "description": "Remind after repeated context compaction and hand work to a fresh Codex task on confirmation.",
+  "author": {
+    "name": "Context Handoff contributors"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Context Handoff",
+    "shortDescription": "Reliable handoff after long Codex conversations.",
+    "longDescription": "Counts context compactions, reminds from the fourth onward, and prepares a durable project handoff when the user says \u786e\u8ba4\u4ea4\u63a5. New-task creation is portable through manual, HTTP, command, or CodexFeishuBridge adapters.",
+    "developerName": "Context Handoff contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "hooks",
+      "skills"
+    ],
+    "defaultPrompt": "Help me configure or perform a context handoff."
+  }
+}

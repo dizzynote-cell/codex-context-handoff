@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${PLUGIN_ROOT}/hooks/post_compact.py\"",
+            "statusMessage": "Updating context handoff state"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${PLUGIN_ROOT}/hooks/user_prompt_submit.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

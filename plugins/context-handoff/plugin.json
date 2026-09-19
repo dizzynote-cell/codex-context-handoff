@@ -1,0 +1,32 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "context-handoff",
+  "version": "0.1.0",
+  "description": "Remind after repeated context compaction and hand work to a fresh Codex task on confirmation.",
+  "author": {
+    "name": "dizzynote-cell",
+    "url": "https://github.com/dizzynote-cell"
+  },
+  "homepage": "https://github.com/dizzynote-cell/codex-context-handoff",
+  "repository": "https://github.com/dizzynote-cell/codex-context-handoff",
+  "license": "MIT",
+  "keywords": ["codex", "handoff", "context", "compaction", "productivity"],
+  "extensions": {
+    "com.openai": {
+      "hooks": "./hooks/hooks.json",
+      "interface": {
+        "displayName": "Context Handoff",
+        "shortDescription": "Reliable handoff after long Codex conversations.",
+        "longDescription": "Counts context compactions, reminds from the fourth onward, and prepares a durable project handoff when the user confirms it.",
+        "developerName": "dizzynote-cell",
+        "category": "Productivity",
+        "capabilities": ["Skills", "Lifecycle hooks", "Optional task adapters"],
+        "websiteURL": "https://github.com/dizzynote-cell/codex-context-handoff",
+        "defaultPrompt": [
+          "Explain how Context Handoff works.",
+          "Prepare a handoff for this task."
+        ]
+      }
+    }
+  }
+}
