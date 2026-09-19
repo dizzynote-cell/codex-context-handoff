@@ -4,6 +4,21 @@ Get a reminder when a conversation grows long, then prepare the notes needed to 
 
 Starting with the fourth recorded context compaction, the plugin reminds you after each compaction. Compaction condenses history; it is not a chat-turn count or proof of errors. Events before installation are not backfilled.
 
+## Why hooks and the fourth compaction
+
+Semantic drift is difficult for the active model to diagnose reliably. A model that has already forgotten an early constraint may still believe its current interpretation is correct, so drift may only become visible after a user correction, file conflict, or failed check. This plugin therefore uses an observed Codex compaction event instead of the model's subjective assessment as its primary trigger.
+
+The threshold is based on the maintainer's long-term practical experience with Codex 5.6 and later models: in the observed development work, a material misunderstanding requiring an immediate conversation change was rarely seen within the first four context compactions. This is the empirical reason for the default, not a universal accuracy guarantee across models, tasks, or users.
+
+The rule is deliberately simple:
+
+- Do not interrupt the first three compactions.
+- Starting with the fourth, remind after every real compaction.
+- Do not require the model to identify a new work stage or wait through another cooldown period.
+- A reminder neither proves an error nor starts a handoff; the user remains in control.
+
+The algorithm does not claim to predict drift. Its advantage is a deterministic, transparent, and testable handoff checkpoint after risk has increased.
+
 ## Install and use
 
 Requires Codex with local plugin hooks and Python 3.11+ available as `python`.
@@ -14,6 +29,16 @@ codex plugin add context-handoff@context-handoff
 ```
 
 Start a new task and review/trust the hooks. The skill and scripts are included.
+
+### Enable and inspect the hooks
+
+1. Start a new Codex task after installation.
+2. Enter `/hooks` in the Codex CLI.
+3. Review `PostCompact` and `UserPromptSubmit`, verify that their commands point into this plugin, and mark them as trusted.
+4. Confirm that both show `Installed 1` and `Active 1`.
+5. Codex requires another review if a hook definition changes; untrusted hooks are skipped.
+
+If a graphical client does not expose the full hook manager, use the Codex CLI on the same machine. On Windows, `codex.cmd` can be used when PowerShell blocks `codex.ps1`.
 
 After a reminder, send the exact phrase `确认交接` in a later message. This means “confirm handoff” and is currently the automatic trigger.
 
@@ -39,3 +64,14 @@ Notes and prompts are saved under the project's `.codex/handoffs/`. Counters are
 Automatic reminders require hooks on the machine running Codex, including when accessed through a mobile browser. A web environment that cannot run local scripts cannot provide automatic reminders.
 
 Windows script simulations and structural validation have been performed. Cross-platform behavior and actual reminder presentation in each client still need verification.
+
+## Hook security boundary
+
+Hooks execute public Python scripts locally, so review them as you would any local automation before trusting them in `/hooks`.
+
+- `PostCompact` runs after compaction. It updates a local count and returns a reminder. It does not store the full conversation.
+- `UserPromptSubmit` starts for every submitted prompt because Codex currently provides no content matcher for this event. It only checks whether the normalized prompt exactly equals `确认交接`; ordinary prompts exit immediately and are neither persisted nor sent over the network.
+- The hooks do not call a model, modify project business files, commit or deploy code, or add telemetry.
+- Handoff files are written only after explicit confirmation. A startup prompt is sent to another local interface or program only when a compatible adapter is configured or detected.
+
+This is a deliberately narrow capability boundary, not a claim that arbitrary local scripts are absolutely safe. Users should review the source, command definitions, installation source, and changed hooks before trusting them.
