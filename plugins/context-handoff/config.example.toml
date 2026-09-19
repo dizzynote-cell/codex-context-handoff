@@ -1,20 +1,23 @@
+# 普通用户无需配置。要始终手动新建，把 auto 改为 manual。
+# Save as ~/.codex/context-handoff.toml or <project>/.codex/context-handoff.toml.
 [handoff]
-# auto: try the local CodexFeishuBridge, then command/http if configured, otherwise manual.
-adapter = "auto" # auto | manual | bridge | http | command
+adapter = "auto" # auto | manual | http | command | bridge
 
-[bridge]
-url = "http://127.0.0.1:8765/api/local-tasks"
-timeout_seconds = 12
-
-# Generic HTTP contract: receives a JSON POST with operation, idempotency_key,
-# title, prompt, cwd, and handoff_path. Return JSON; thread_id/threadId and url are optional.
+# 自制 Codex 外壳：选择 http，接口需遵循 docs/adapters.md。
+# Custom Codex UI: select http and implement the documented JSON contract.
 #[http]
 #url = "http://127.0.0.1:9000/codex/new-task"
 #timeout_seconds = 15
 #[http.headers]
 #Authorization = "Bearer replace-me"
 
-# Generic command contract: JSON arrives on stdin and one JSON object must be written to stdout.
+# 或调用本机程序：标准输入接收 JSON，标准输出返回结果 JSON。
 #[command]
-#command = ["python", "C:/path/to/create_codex_task.py"]
+#command = ["python", "C:/tools/create_codex_task.py"]
 #timeout_seconds = 30
+
+# 特定本机接口的兼容模式，并非任意外壳都能直接使用。
+# auto 优先探测此地址；使用其他接口时明确选择 http 或 command。
+[bridge]
+url = "http://127.0.0.1:8765/api/local-tasks"
+timeout_seconds = 12

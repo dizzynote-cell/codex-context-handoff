@@ -9,7 +9,7 @@
   "interface": {
     "displayName": "Context Handoff",
     "shortDescription": "Reliable handoff after long Codex conversations.",
-    "longDescription": "Counts context compactions, reminds from the fourth onward, and prepares a durable project handoff when the user says \u786e\u8ba4\u4ea4\u63a5. New-task creation is portable through manual, HTTP, command, or CodexFeishuBridge adapters.",
+    "longDescription": "Reminds after the fourth context compaction and each one after it. Reply with 确认交接 to prepare handoff notes and a prompt for a fresh conversation. Compatible custom Codex interfaces can create the conversation automatically; otherwise, create it manually.",
     "developerName": "Context Handoff contributors",
     "category": "Productivity",
     "capabilities": [

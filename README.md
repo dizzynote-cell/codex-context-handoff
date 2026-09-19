@@ -1,109 +1,55 @@
 # Auto Context Handoff for Codex/Codex自动上下文交接插件
 
-[中文](#中文) · [English](#english)
+对话太长时，提醒你换一个新对话，并帮你整理接着做所需的材料。
 
-## 中文
+从插件记录的**第 4 次上下文压缩**开始，每次压缩后提醒一次。你可以继续工作，也可以在之后任意一轮单独回复 `确认交接`。Codex 会整理当前目标、已完成工作、重要决定和下一步，生成交接文档与新对话的首条提示词。
 
-Context Handoff 是一个面向长时间 Codex 开发任务的开源插件。它从第 4 次上下文压缩开始提醒用户；提醒后，用户可以在任何后续轮次回复 `确认交接`，让 Codex 根据当时的真实项目状态整理交接材料，并在环境支持时创建新的顶层任务。
+> 上下文压缩，是 Codex 为容纳后续内容而浓缩历史对话的过程。这里统计的是压缩次数，不是聊天轮数；第 4 次是提醒规则，不代表任务已经出错。安装前的压缩不自动补计。
 
-### 为什么同时包含 Hook 和 Skill
+## 安装
 
-- Hook 负责记录压缩次数、显示提醒和识别明确的交接确认。
-- Skill 负责决定交接材料应包含什么、如何保护未提交修改，以及新任务应该怎样接手。
-- Plugin 是用户安装的唯一发布单位，已经同时包含二者。
-- CodexFeishuBridge 只是可选适配器；没有安装 Bridge 也能使用手动交接。
-
-### 安装
-
-要求：支持本地插件和 Hook 的 Codex 客户端，以及可通过 `python` 命令调用的 Python 3.11 或更高版本。
+需要支持本地插件及生命周期钩子（Hook）的 Codex，以及能通过 `python` 命令运行的 Python 3.11+。
 
 ```bash
 codex plugin marketplace add dizzynote-cell/codex-context-handoff
 codex plugin add context-handoff@context-handoff
 ```
 
-安装后新建一个 Codex 任务。首次运行时请审查并信任插件 Hook，否则自动压缩计数不会执行。
+安装后打开新任务，并按客户端提示审查、信任插件 Hook。Skill 和脚本已经包含在插件内，无需分别安装。
 
-### 使用
+## 怎么用
 
-正常使用 Codex 即可。第 4 次上下文压缩完成后会看到提醒；以后任意轮次回复：
+1. 正常使用 Codex，等待交接提醒。
+2. 想换对话时，单独发送：`确认交接`。
+3. 插件生成交接文档和启动提示词。有兼容的创建接口时自动新建对话；否则，你新建对话并粘贴生成的提示词。
 
-```text
-确认交接
+交接以确认时的最新状态为准，保留未提交修改，不要求先提交代码或完成当前功能。材料保存在项目的 `.codex/handoffs/` 下：
+
+- `HANDOFF_001.md`：项目进度与背景，给接手对话阅读。
+- `START_PROMPT_001.md`：粘贴到新对话的首条消息。
+- `STATE_001.json`：插件进度记录，无需手动编辑。
+
+## 需要配置吗？
+
+**普通使用无需配置。** 默认尝试本机兼容接口，没有接口就生成材料供你手动新建对话。并不是所有 Codex 客户端或自制外壳都支持自动创建。
+
+如果希望始终手动新建，在用户目录的 `.codex/context-handoff.toml` 中写入：
+
+```toml
+[handoff]
+adapter = "manual"
 ```
 
-插件不会强制提交、部署、清理或回滚工作区。默认交接文件写入：
+Windows 路径示例：`C:/Users/你的用户名/.codex/context-handoff.toml`。也可以放进项目的 `.codex/context-handoff.toml`，仅对该项目生效，项目配置优先。
 
-```text
-.codex/handoffs/<chain-id>/
-  HANDOFF_001.md
-  START_PROMPT_001.md
-  STATE_001.json
-```
+如果你使用**自制 Codex 外壳**（例如自己搭建的网页或手机访问界面），可以让插件调用它的创建对话接口。外壳需要先按协议接入，填写任意网址并不能直接生效。参见[外壳接入说明](docs/adapters.md)和[配置示例](plugins/context-handoff/config.example.toml)。
 
-### 新任务创建方式
+## 适用范围与数据
 
-| 适配器 | 用途 |
-|---|---|
-| `manual` | 始终可用，给出新任务标题和首条提示词 |
-| `bridge` | 调用 CodexFeishuBridge 的本机接口创建顶层 Codex 任务 |
-| `http` | 适配其他带 HTTP 接口的 Codex 外壳 |
-| `command` | 通过 JSON stdin/stdout 适配本机程序 |
-| `auto` | 自动尝试可用适配器，最后回退到 `manual` |
+自动提醒取决于运行 Codex 的机器是否支持并启用了 Hook。用手机访问自制网页也可以，前提是后端支持；仅安装到不运行本地脚本的网页环境不会获得自动提醒。
 
-复制 [`config.example.toml`](plugins/context-handoff/config.example.toml) 到 `~/.codex/context-handoff.toml` 或项目的 `.codex/context-handoff.toml` 进行配置。
+计数保存在本机，插件没有额外遥测。自动创建对话时，启动提示词会交给所选接口或程序，再由它发送给 Codex。默认模式会探测本机接口；如不希望使用它，设置 `manual`。
 
-### 隐私与安全
+目前完成了 Windows 上的脚本模拟与结构校验；跨平台兼容性和各客户端实际提醒显示仍需进一步验证。
 
-- 压缩计数和交接事务状态保存在本机。
-- 插件本身不提供遥测，也不会主动上传对话或项目内容。
-- 只有配置 HTTP 或 Bridge 适配器后，启动提示词才会发送给对应的本机或自定义端点。
-- Hook 在获得用户信任前不会运行。
-
-### 当前限制
-
-- 自动压缩计数依赖本地 Codex Hook；不支持本地 Hook 的网页或移动环境只能使用 Skill 的手动交接能力。
-- 自动创建新任务取决于宿主是否提供接口。官方客户端没有可用接口时会回退到手动方式。
-- 当前版本主要在 Windows 上验证，欢迎提交 macOS 和 Linux 兼容性反馈。
-
-## English
-
-Context Handoff is an open-source Codex plugin for long-running development tasks. Starting with the fourth context compaction, it reminds the user that the task can be handed off. At any later turn, the user can reply `确认交接` to generate durable handoff documents from the latest workspace state.
-
-The plugin bundles both lifecycle hooks and a reusable skill. Hooks provide deterministic compaction counting and confirmation detection; the skill defines the semantic handoff workflow. CodexFeishuBridge is optional.
-
-### Install
-
-Requirements: a Codex client that supports local plugins and hooks, plus Python 3.11+ available as `python`.
-
-```bash
-codex plugin marketplace add dizzynote-cell/codex-context-handoff
-codex plugin add context-handoff@context-handoff
-```
-
-Start a new Codex task after installation and review/trust the bundled hooks when prompted.
-
-### Configure
-
-Copy [`config.example.toml`](plugins/context-handoff/config.example.toml) to `~/.codex/context-handoff.toml` or `.codex/context-handoff.toml`. Available adapters are `auto`, `manual`, `bridge`, `http`, and `command`.
-
-### Privacy
-
-State is stored locally. The plugin has no telemetry and does not upload conversations or project files. A startup prompt is sent externally only when the user configures an HTTP-style adapter.
-
-## Development
-
-Plugin source: [`plugins/context-handoff`](plugins/context-handoff)
-
-Validate before submitting changes:
-
-```bash
-python path/to/plugin-creator/scripts/validate_plugin.py plugins/context-handoff
-python path/to/skill-creator/scripts/quick_validate.py plugins/context-handoff/skills/context-handoff
-```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
-
-## License
-
-[MIT](plugins/context-handoff/LICENSE)
+[English](docs/README.en.md) · [贡献指南](CONTRIBUTING.md) · [安全说明](SECURITY.md) · [MIT 许可证](plugins/context-handoff/LICENSE)

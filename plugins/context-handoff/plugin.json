@@ -17,7 +17,7 @@
       "interface": {
         "displayName": "Context Handoff",
         "shortDescription": "Reliable handoff after long Codex conversations.",
-        "longDescription": "Counts context compactions, reminds from the fourth onward, and prepares a durable project handoff when the user confirms it.",
+        "longDescription": "Reminds after the fourth context compaction and each one after it. Reply with 确认交接 to prepare handoff notes and a prompt for a fresh conversation. Compatible custom Codex interfaces can create the conversation automatically; otherwise, create it manually.",
         "developerName": "dizzynote-cell",
         "category": "Productivity",
         "capabilities": ["Skills", "Lifecycle hooks", "Optional task adapters"],

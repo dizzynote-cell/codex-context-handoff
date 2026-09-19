@@ -6,7 +6,7 @@ Issues and pull requests are welcome.
 
 - Keep compaction counting deterministic and inexpensive; do not add per-turn model monitoring.
 - Preserve the user's live workspace state. A handoff must not imply permission to commit, clean, deploy, roll back, or finish unrelated work.
-- Keep adapters optional. The manual path must remain functional without CodexFeishuBridge or another shell.
+- Keep custom Codex interfaces optional. Users must be able to create the receiving conversation manually.
 - Never write secrets, hidden reasoning, or raw long logs into handoff documents.
 - Preserve idempotency: retries must not intentionally create duplicate receiving tasks.
 
