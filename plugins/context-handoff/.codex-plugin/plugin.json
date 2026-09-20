@@ -1,6 +1,6 @@
 {
   "name": "context-handoff",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Remind after repeated context compaction and hand work to a fresh Codex task on confirmation.",
   "author": {
     "name": "Context Handoff contributors"
@@ -9,7 +9,7 @@
   "interface": {
     "displayName": "Context Handoff",
     "shortDescription": "Reliable handoff after long Codex conversations.",
-    "longDescription": "Reminds after the fourth context compaction and each one after it. Reply with 确认交接 to prepare handoff notes and a prompt for a fresh conversation. Compatible custom Codex interfaces can create the conversation automatically; otherwise, create it manually.",
+    "longDescription": "Reminds after the fourth context compaction and each one after it. Older tasks can import structured compaction events when the host provides a readable transcript. Reply with \u786e\u8ba4\u4ea4\u63a5 to prepare handoff notes and a prompt for a fresh conversation.",
     "developerName": "Context Handoff contributors",
     "category": "Productivity",
     "capabilities": [

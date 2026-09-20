@@ -48,6 +48,14 @@ After a reminder, send the exact phrase `确认交接` in a later message. This 
 
 Codex prepares handoff notes and a startup prompt from the latest task state. A compatible interface can create the receiving conversation automatically. Otherwise, create one yourself and paste the prompt. Existing uncommitted work is preserved.
 
+### Initialize a task that predates installation
+
+In an older task that you still intend to use, send the exact phrase `初始化老对话压缩计数` (“initialize the old conversation's compaction count”). Initialization runs only when the Codex host supplies that task's local transcript path and the hook has permission to read it and write plugin state.
+
+The script counts only structured `compacted` events. It does not infer a number from turns, summaries, or model judgment, and it does not accept an arbitrary transcript path from the prompt. The imported and existing counts are merged by maximum rather than added, making retries idempotent. A count of four or more immediately makes the task handoff-eligible, and later events continue through `PostCompact`.
+
+If history is unavailable, permission is insufficient, or the format is unrecognized, the existing count is preserved and the historical count remains unknown. Codex transcript format is not a stable interface, so this compatibility feature fails visibly instead of guessing.
+
 ## Configuration
 
 No configuration is required. The default probes a compatible local interface and otherwise supplies materials for manual creation.
@@ -75,6 +83,7 @@ Hooks execute public Python scripts locally, so review them as you would any loc
 
 - `PostCompact` runs after compaction. It updates a local count and returns a reminder. It does not store the full conversation.
 - `UserPromptSubmit` starts for every submitted prompt because Codex currently provides no content matcher for this event. It only checks whether the normalized prompt exactly equals `确认交接`; ordinary prompts exit immediately and are neither persisted nor sent over the network.
+- For the exact initialization phrase, the same hook may read the current host-supplied transcript and import structured pre-installation compaction events. It does nothing when that file is unavailable or unreadable.
 - The hooks do not call a model, modify project business files, commit or deploy code, or add telemetry.
 - Handoff files are written only after explicit confirmation. A startup prompt is sent to another local interface or program only when a compatible adapter is configured or detected.
 

@@ -7,7 +7,9 @@ Context Handoff runs local lifecycle hooks after the user explicitly trusts them
 The plugin uses two hooks:
 
 - `PostCompact` updates the local compaction count and emits a reminder beginning with the fourth recorded compaction.
-- `UserPromptSubmit` receives each submitted prompt because Codex does not support a matcher for this event. It performs an exact local comparison with `确认交接`. Non-matching prompts exit without being stored or transmitted.
+- `UserPromptSubmit` receives each submitted prompt because Codex does not support a matcher for this event. It performs exact local comparisons with `确认交接` and the documented old-task initialization phrases. Non-matching prompts exit without being stored or transmitted.
+
+Old-task initialization is permission-bound. It reads only the current `transcript_path` supplied by the Codex host, never a path supplied inside the prompt. The script streams the local JSONL file, counts structured `compacted` events, and does not persist or output message bodies. If the file is missing, unreadable, belongs to another session, or has no recognizable events, it preserves the existing count and reports failure.
 
 The hooks do not make network requests, call a model, modify business files, or run Git and deployment commands. They store only compaction state and transaction metadata locally. Handoff files are created only after explicit confirmation.
 

@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"${PLUGIN_ROOT}/hooks/post_compact.py\"",
+            "command": "python -X utf8 \"${PLUGIN_ROOT}/hooks/post_compact.py\"",
             "statusMessage": "Updating context handoff state"
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"${PLUGIN_ROOT}/hooks/user_prompt_submit.py\""
+            "command": "python -X utf8 \"${PLUGIN_ROOT}/hooks/user_prompt_submit.py\""
           }
         ]
       }

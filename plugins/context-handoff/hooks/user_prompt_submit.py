@@ -3,8 +3,10 @@ from __future__ import annotations
 import json
 import re
 import sys
+from pathlib import Path
 
-from hook_state import load_state
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hook_state import backfill_current_session, load_state
 
 
 def is_confirmation(prompt: object) -> bool:
@@ -12,10 +14,37 @@ def is_confirmation(prompt: object) -> bool:
     return normalized == "确认交接"
 
 
+def is_initialization(prompt: object) -> bool:
+    normalized = re.sub(r"[。.!！?？\s]+$", "", str(prompt or "").strip())
+    return normalized in {"初始化老对话压缩计数", "初始化当前老对话压缩计数"}
+
+
 def main() -> int:
     try:
         event = json.load(sys.stdin)
     except (json.JSONDecodeError, OSError):
+        return 0
+    if is_initialization(event.get("prompt")):
+        session_id = event.get("session_id") or event.get("sessionId") or "unknown-session"
+        try:
+            state = backfill_current_session(
+                session_id,
+                event.get("transcript_path") or event.get("transcriptPath"),
+                event.get("cwd"),
+            )
+        except ValueError as error:
+            print(json.dumps({
+                "systemMessage": f"老对话压缩计数初始化失败：{error}。未修改现有计数，也不会猜测历史次数。"
+            }, ensure_ascii=False))
+            return 0
+        count = int(state.get("compaction_count") or 0)
+        status = "已进入可交接状态" if count >= 4 else "尚未达到第 4 次提醒阈值"
+        print(json.dumps({
+            "systemMessage": (
+                f"已从当前任务的本机会话记录初始化压缩计数：{count} 次，{status}。"
+                "后续压缩将继续由 PostCompact 监听；重复初始化不会重复累计。"
+            )
+        }, ensure_ascii=False))
         return 0
     if not is_confirmation(event.get("prompt")):
         return 0

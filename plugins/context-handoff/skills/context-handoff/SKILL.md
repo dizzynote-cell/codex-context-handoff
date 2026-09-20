@@ -1,6 +1,6 @@
 ---
 name: context-handoff
-description: Prepare and dispatch a durable Codex task handoff when the user says “确认交接”, asks to change conversations/tasks, or wants a long-running task transferred to a fresh conversation. Also explain or configure compaction-based handoff reminders and supported adapters. Do not use for ordinary summaries that are not intended to continue work in another task.
+description: Prepare and dispatch a durable Codex task handoff when the user says “确认交接”, asks to change conversations/tasks, or wants a long-running task transferred to a fresh conversation. Also initialize an older task's compaction count, or explain and configure compaction reminders and adapters. Do not use for ordinary summaries that are not intended to continue work in another task.
 ---
 
 # Context Handoff
@@ -8,6 +8,12 @@ description: Prepare and dispatch a durable Codex task handoff when the user say
 ## Purpose
 
 Carry the current task into a fresh top-level Codex task without pretending the workspace is cleaner or more complete than it is. Keep the handoff lightweight: preserve the decisions and breakpoint that matter, not a transcript.
+
+## Initialize an older task
+
+When the user sends the exact phrase `初始化老对话压缩计数` or `初始化当前老对话压缩计数`, let the plugin hook handle the request. It may backfill only from the current host-supplied transcript when that file exists and is readable. Do not infer a count from conversation length, summaries, or model memory, and do not accept a user-supplied arbitrary transcript path as a substitute.
+
+Report the hook result. A successful import joins the normal listener: counts are merged by maximum rather than added, so retries do not duplicate history. If access is unavailable or the transcript format is not recognized, preserve the existing count and say that the historical count remains unknown.
 
 ## On “确认交接”
 
