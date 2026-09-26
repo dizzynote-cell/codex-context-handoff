@@ -1,6 +1,6 @@
 {
   "name": "context-handoff",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Remind after repeated context compaction and hand work to a fresh Codex task on confirmation.",
   "author": {
     "name": "Context Handoff contributors"

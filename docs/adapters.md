@@ -27,7 +27,7 @@ url = "http://127.0.0.1:9000/codex/new-task"
 timeout_seconds = 15
 ```
 
-接口收到 JSON POST，包含 `operation="new_task"`、`idempotency_key`、`title`、`prompt`、`cwd` 和 `handoff_path`。外壳负责创建普通对话、设置标题并发送首条消息，返回 JSON 对象，例如：
+接口收到 JSON POST，包含 `operation="new_task"`、`idempotency_key`、`title`、`prompt`、`cwd`、`handoff_path` 和 `source_thread_id`。外壳负责创建普通对话、设置标题、尽可能继承来源对话的项目分类，并发送首条消息；若不能继承，应明确告知用户。返回 JSON 对象，例如：
 
 ```json
 {"thread_id": "created-thread-id", "url": "https://your-shell.example/task/created-thread-id"}
@@ -52,6 +52,6 @@ timeout_seconds = 30
 
 `bridge` 是为 CodexFeishuBridge 接口提供的兼容模式，并非所有外壳通用。其他外壳推荐使用 HTTP 或命令方式，无需安装该项目。
 
-默认地址为 `http://127.0.0.1:8765/api/local-tasks`。发送 `op="new_thread"`、`text`、`cwd`、`title`，取得 `taskId` 后查询 `/api/local-task/<taskId>`。
+默认地址为 `http://127.0.0.1:8765/api/local-tasks`。发送 `op="new_thread"`、`text`、`cwd`、`title`、`sourceThreadId`，取得 `taskId` 后查询 `/api/local-task/<taskId>`。支持来源会话 ID 的新版外壳会沿用来源对话的网页项目分类；旧版外壳忽略该字段时，可能仍需手动归类。
 
 当前 auto 只检查端口可连接，不验证服务身份。若该端口运行其他服务，请明确选择 manual、http 或 command。自动派发报错后，应先检查是否已创建对话再重试；当前版本不保证网络中断时恰好创建一次。

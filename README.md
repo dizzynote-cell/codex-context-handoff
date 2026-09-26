@@ -46,6 +46,8 @@ codex plugin add context-handoff@context-handoff
 
 部分图形客户端暂时没有完整的 Hook 管理入口，可以使用同一台机器上的 Codex CLI 完成审查。Windows PowerShell 如果阻止 `codex.ps1`，可以运行 `codex.cmd` 再输入 `/hooks`。
 
+已知兼容情况：在 Windows Codex CLI 0.156.1 上，曾出现插件显示已安装、已启用，但 `/hooks` 中两项仍是 `0/0`。此时提醒不会运行，不能仅凭插件安装状态判断成功。可按[用户级 Hook 备用配置](docs/hook-fallback.md)接入脚本；插件自身的枚举问题仍待修复。
+
 ## 怎么用
 
 1. 正常使用 Codex，等待交接提醒。
@@ -65,6 +67,8 @@ codex plugin add context-handoff@context-handoff
 如果会话记录未保存、权限不足或当前记录格式无法识别，插件会保留现有计数并显示初始化失败，不猜测历史次数。Codex 的会话记录格式不是稳定接口，因此该功能属于有明确失败提示的兼容能力。
 
 交接以确认时的最新状态为准，保留未提交修改，不要求先提交代码或完成当前功能。材料保存在项目的 `.codex/handoffs/` 下：
+
+若来源对话标题是「继续开发7」，下一对话会以「继续开发8」开头；交接文件的 `001` 仅是文件序号，不用于对话编号。兼容的外壳可根据来源会话 ID 把新对话归入原项目分类。
 
 - `HANDOFF_001.md`：项目进度与背景，给接手对话阅读。
 - `START_PROMPT_001.md`：粘贴到新对话的首条消息。

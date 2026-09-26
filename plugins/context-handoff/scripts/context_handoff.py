@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shlex
 import socket
 import subprocess
@@ -27,6 +28,7 @@ except ImportError:  # pragma: no cover - Python < 3.11
 
 DEFAULT_BRIDGE_URL = "http://127.0.0.1:8765/api/local-tasks"
 ACTIVE_STATUSES = {"preparing", "ready", "dispatching", "dispatched"}
+CONTINUATION_PREFIX = re.compile(r"^\s*继续开发\s*(\d+)(?=$|[\s｜|·:：—-])")
 
 
 def now() -> str:
@@ -117,6 +119,24 @@ def current_transaction(args: argparse.Namespace) -> tuple[Path, dict[str, Any],
     return path, record, transaction
 
 
+def continuation_title(source_title: str, proposed_title: str) -> str:
+    """Number a continuation from its source title, never from handoff file sequence."""
+    title = proposed_title.strip()
+    if not title:
+        raise RuntimeError("Title must not be empty")
+    source = CONTINUATION_PREFIX.match(source_title or "")
+    proposed = CONTINUATION_PREFIX.match(title)
+    if not source:
+        if proposed:
+            raise RuntimeError("A numbered continuation requires the source task title")
+        return title
+    stage = title[proposed.end():].strip(" ｜|·:：—-\t") if proposed else title
+    if not stage:
+        stage = source_title[source.end():].strip(" ｜|·:：—-\t")
+    number = int(source.group(1)) + 1
+    return f"继续开发 {number}｜{stage}" if stage else f"继续开发 {number}"
+
+
 def finalize(args: argparse.Namespace) -> dict[str, Any]:
     path, record, tx = current_transaction(args)
     if tx.get("status") == "dispatched":
@@ -127,10 +147,11 @@ def finalize(args: argparse.Namespace) -> dict[str, Any]:
         raise RuntimeError(f"Handoff document is missing or too short: {handoff}")
     if not prompt.is_file() or prompt.stat().st_size < 40:
         raise RuntimeError(f"Startup prompt is missing or too short: {prompt}")
-    title = args.title.strip()
+    source_title = str(args.source_title or tx.get("source_title") or "").strip()
+    title = continuation_title(source_title, args.title) if tx.get("mode") == "continuation" else args.title.strip()
     if not title:
         raise RuntimeError("Title must not be empty")
-    tx.update({"status": "ready", "title": title, "ready_at": now()})
+    tx.update({"status": "ready", "title": title, "source_title": source_title, "ready_at": now()})
     record["current"] = tx
     atomic_json(path, record)
     atomic_json(Path(tx["state_path"]), tx)
@@ -180,7 +201,8 @@ def bridge_dispatch(tx: dict[str, Any], section: dict[str, Any]) -> dict[str, An
     url = str(section.get("url") or DEFAULT_BRIDGE_URL)
     timeout = float(section.get("timeout_seconds") or 12)
     prompt = Path(tx["prompt_path"]).read_text(encoding="utf-8")
-    submitted = post_json(url, {"op": "new_thread", "text": prompt, "cwd": tx["cwd"], "title": tx["title"]}, None, timeout)
+    submitted = post_json(url, {"op": "new_thread", "text": prompt, "cwd": tx["cwd"], "title": tx["title"],
+                                "sourceThreadId": tx["session_id"]}, None, timeout)
     task_id = str(submitted.get("taskId") or "")
     if not task_id:
         raise RuntimeError(f"Bridge did not return taskId: {submitted}")
@@ -213,6 +235,7 @@ def http_dispatch(tx: dict[str, Any], section: dict[str, Any]) -> dict[str, Any]
         "prompt": Path(tx["prompt_path"]).read_text(encoding="utf-8"),
         "cwd": tx["cwd"],
         "handoff_path": tx["handoff_path"],
+        "source_thread_id": tx["session_id"],
     }
     result = post_json(url, payload, {str(k): str(v) for k, v in headers.items()}, float(section.get("timeout_seconds") or 15))
     return {"adapter": "http", "adapter_result": result, "thread_id": result.get("thread_id") or result.get("threadId"), "url": result.get("url")}
@@ -233,6 +256,7 @@ def command_dispatch(tx: dict[str, Any], section: dict[str, Any]) -> dict[str, A
         "prompt": Path(tx["prompt_path"]).read_text(encoding="utf-8"),
         "cwd": tx["cwd"],
         "handoff_path": tx["handoff_path"],
+        "source_thread_id": tx["session_id"],
     }
     completed = subprocess.run(argv, input=json.dumps(payload, ensure_ascii=False), text=True, capture_output=True, timeout=float(section.get("timeout_seconds") or 30), check=False)
     if completed.returncode:
@@ -313,6 +337,7 @@ def parser() -> argparse.ArgumentParser:
             command.add_argument("--mode", choices=("continuation", "split"), default="continuation")
         if name == "finalize":
             command.add_argument("--title", required=True)
+            command.add_argument("--source-title", default="")
         if name == "dispatch":
             command.add_argument("--adapter", choices=("auto", "manual", "bridge", "http", "command"))
     return root

@@ -23,22 +23,24 @@ You may wait for an already-running operation to finish or stop it safely. Then 
 
 ## Workflow
 
-1. Inspect the current objective, recent decisions, relevant files, current diff/status, and verification evidence. Prefer read-only inspection.
+1. Inspect the current objective, source task title and project grouping when available, recent decisions, relevant files, current diff/status, and verification evidence. Prefer read-only inspection.
 2. Start or resume an idempotent transaction:
 
    `python <plugin-root>/scripts/context_handoff.py begin --session-id <session-id> --cwd <absolute-project-path>`
 
    Use the session ID supplied by the hook. For a user-requested handoff without hook context, omit it. Read the JSON result and reuse its paths if the transaction already exists.
-3. Write `handoff_path` and `prompt_path` using the structures below. Do not include secrets, raw long logs, hidden chain-of-thought, or obsolete requirements.
-4. Choose a concise title. Prefer `继续开发 {sequence}｜{current stage}`. If the stage is uncertain, use `{source title} · 续接 {sequence}`. Keep it understandable without opening the old task.
+3. Choose a concise title before writing the documents. If the source task is named `继续开发 N`, use `继续开发 N+1｜{current stage}`; the transaction's `sequence` numbers handoff files and is not the conversation number. If the source title is unknown, do not invent a numbered continuation. Keep the title understandable without opening the old task.
+4. Write `handoff_path` and `prompt_path` using the structures below, with the chosen title and the source project's identity if known. Do not include secrets, raw long logs, hidden chain-of-thought, or obsolete requirements.
 5. Mark the transaction ready:
 
-   `python <plugin-root>/scripts/context_handoff.py finalize --session-id <session-id> --cwd <absolute-project-path> --title "<title>"`
+   `python <plugin-root>/scripts/context_handoff.py finalize --session-id <session-id> --cwd <absolute-project-path> --title "<title>" --source-title "<actual-source-title>"`
+
+   Omit `--source-title` only when the actual title is unavailable. The script checks and corrects the numbered continuation before dispatch; if it rejects a guessed number, use an unnumbered title.
 6. Dispatch it:
 
    `python <plugin-root>/scripts/context_handoff.py dispatch --session-id <session-id> --cwd <absolute-project-path>`
 
-   The script selects `manual`, `bridge`, `http`, or `command` from configuration. Never create a subagent as the receiving task. If dispatch is manual, provide the returned title and prompt path/content so the user can create a normal top-level task. If it returns a thread/task ID or URL, report it. If creation fails, leave the source task usable and report how to retry; do not create a second transaction.
+   The script selects `manual`, `bridge`, `http`, or `command` from configuration and passes the source thread ID to compatible adapters so the new task can inherit its project grouping. Never create a subagent as the receiving task. If dispatch is manual, provide the returned title and prompt path/content and tell the user to create it in the source project. If it returns a thread/task ID or URL, report it. If project inheritance is unsupported, say so instead of claiming the new task is already grouped. If creation fails, leave the source task usable and report how to retry; do not create a second transaction.
 
 ## Handoff document
 
